@@ -1,3 +1,11 @@
+# Repo specific
+*.out
+mm
+mm_foo
+*.err
+*.json
+
+
 # Prerequisites
 *.d
 
