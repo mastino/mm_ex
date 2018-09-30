@@ -4,7 +4,7 @@ mm
 mm_foo
 *.err
 *.json
-
+*.openss
 
 # Prerequisites
 *.d
