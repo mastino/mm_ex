@@ -10,8 +10,6 @@
  *
  */
 
-#include <caliper/cali.h>
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <omp.h>
@@ -34,10 +32,6 @@ double D[N][M];
 
 // Initialize the matrices (uniform values to make an easier check)
 void matrix_init(void) {
-CALI_CXX_MARK_FUNCTION;
-cali_id_t thread_attr = cali_create_attribute("thread_id", CALI_TYPE_INT, CALI_ATTR_ASVALUE | CALI_ATTR_SKIP_EVENTS);
-cali_set_int(thread_attr, omp_get_thread_num());
-
         int i, j;
 
         // A[N][P] -- Matrix A
@@ -64,17 +58,11 @@ cali_set_int(thread_attr, omp_get_thread_num());
 
 
 double foo1(int i, int j){
-CALI_CXX_MARK_FUNCTION;
-cali_id_t thread_attr = cali_create_attribute("thread_id", CALI_TYPE_INT, CALI_ATTR_ASVALUE | CALI_ATTR_SKIP_EVENTS);
-cali_set_int(thread_attr, omp_get_thread_num());
   D[i][j] += A[i][j] * B[i][j];
 }
 
 
 double foo2(int i){
-CALI_CXX_MARK_FUNCTION;
-cali_id_t thread_attr = cali_create_attribute("thread_id", CALI_TYPE_INT, CALI_ATTR_ASVALUE | CALI_ATTR_SKIP_EVENTS);
-cali_set_int(thread_attr, omp_get_thread_num());
   int k,j;
   for (j=0; j<M; j++){
   foo1(i,j);
@@ -86,9 +74,6 @@ cali_set_int(thread_attr, omp_get_thread_num());
 
 // The actual mulitplication function, totally naive
 double matrix_multiply(void) {
-CALI_CXX_MARK_FUNCTION;
-cali_id_t thread_attr = cali_create_attribute("thread_id", CALI_TYPE_INT, CALI_ATTR_ASVALUE | CALI_ATTR_SKIP_EVENTS);
-cali_set_int(thread_attr, omp_get_thread_num());
         int i, j, k;
         double start, end;
         double B_T[M][P];
@@ -126,9 +111,6 @@ cali_set_int(thread_attr, omp_get_thread_num());
 // Function to check the result, relies on all values in each initial
 // matrix being the same
 int check_result(void) {
-CALI_CXX_MARK_FUNCTION;
-cali_id_t thread_attr = cali_create_attribute("thread_id", CALI_TYPE_INT, CALI_ATTR_ASVALUE | CALI_ATTR_SKIP_EVENTS);
-cali_set_int(thread_attr, omp_get_thread_num());
         int i, j;
 
         double e  = 0.0;
@@ -151,9 +133,6 @@ cali_set_int(thread_attr, omp_get_thread_num());
 
 // main function
 int main(int argc, char **argv) {
-CALI_CXX_MARK_FUNCTION;
-cali_id_t thread_attr = cali_create_attribute("thread_id", CALI_TYPE_INT, CALI_ATTR_ASVALUE | CALI_ATTR_SKIP_EVENTS);
-cali_set_int(thread_attr, omp_get_thread_num());
         int correct;
         int err = 0;
         double run_time;

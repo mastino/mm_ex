@@ -10,7 +10,6 @@
  *
  */
 
-#include <caliper/cali.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <omp.h>
@@ -32,7 +31,6 @@ double C[N][M];
 
 // Initialize the matrices (uniform values to make an easier check)
 void matrix_init(void) {
-	CALI_MARK_FUNCTION_BEGIN;
 	int i, j;
 
         // A[N][P] -- Matrix A
@@ -55,16 +53,12 @@ void matrix_init(void) {
                         C[i][j] = 0.0;
                 }
         }
-	CALI_MARK_FUNCTION_END;
 }
 
 
 
 // The actual mulitplication function, totally naive
 double matrix_multiply(void) {
-	CALI_MARK_FUNCTION_BEGIN;
-	cali_set_int_byname("mm.matrix_multiply.iloop", N);
-
         int i, j, k;
         double start, end;
         /*
@@ -81,11 +75,6 @@ double matrix_multiply(void) {
         // the timer value is captured.
         start = omp_get_wtime();
 
-	cali_id_t thread_attr = cali_create_attribute("thread.id", 
-						CALI_TYPE_INT, 
-						CALI_ATTR_ASVALUE | CALI_ATTR_SKIP_EVENTS);
-
-	CALI_MARK_LOOP_BEGIN(iloop, "mm.iloop");
         #pragma omp parallel for private(i,j,k)
         for (i=0; i<N; i++){
         	// CALI_MARK_ITERATION_BEGIN(iloop, i);
@@ -98,12 +87,10 @@ double matrix_multiply(void) {
                 }
 		// CALI_MARK_ITERATION_END(iloop);	
         }
-	CALI_MARK_LOOP_END(iloop);
 
         // timer for the end of the computation
         end = omp_get_wtime();
         // return the amount of high resolution time spent
-	CALI_MARK_FUNCTION_END;
         return end - start;
 }
 
@@ -111,7 +98,6 @@ double matrix_multiply(void) {
 // Function to check the result, relies on all values in each initial
 // matrix being the same
 int check_result(void) {
-	CALI_MARK_FUNCTION_BEGIN;
         int i, j;
 
         double e  = 0.0;
@@ -124,7 +110,6 @@ int check_result(void) {
                         ee += e * e;
                 }
         }
-	CALI_MARK_FUNCTION_END;
         if (ee > TOL) {
                 return 0;
         } else {
@@ -134,7 +119,6 @@ int check_result(void) {
 
 // main function
 int main(int argc, char **argv) {
-	CALI_MARK_FUNCTION_BEGIN;
         int correct;
         int err = 0;
         double run_time;
@@ -162,6 +146,5 @@ int main(int argc, char **argv) {
         } else {
                fprintf(stdout,"\n SUCCESS : results match\n");
         }
-        CALI_MARK_FUNCTION_END;
 }
 
