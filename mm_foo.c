@@ -35,8 +35,6 @@ double D[N][M];
 // Initialize the matrices (uniform values to make an easier check)
 void matrix_init(void) {
 CALI_CXX_MARK_FUNCTION;
-cali_id_t thread_attr = cali_create_attribute("thread_id", CALI_TYPE_INT, CALI_ATTR_ASVALUE | CALI_ATTR_SKIP_EVENTS);
-cali_set_int(thread_attr, omp_get_thread_num());
 
         int i, j;
 
@@ -58,51 +56,58 @@ cali_set_int(thread_attr, omp_get_thread_num());
         for (i=0; i<N; i++) {
                 for (j=0; j<M; j++) {
                         C[i][j] = 0.0;
+                        D[i][j] = 0.0;
                 }
         }
 }
 
-
+// not used in this example
 double foo1(int i, int j){
 CALI_CXX_MARK_FUNCTION;
-cali_id_t thread_attr = cali_create_attribute("thread_id", CALI_TYPE_INT, CALI_ATTR_ASVALUE | CALI_ATTR_SKIP_EVENTS);
-cali_set_int(thread_attr, omp_get_thread_num());
   D[i][j] += A[i][j] * B[i][j];
 }
 
 
 double foo2(int i){
 CALI_CXX_MARK_FUNCTION;
-cali_id_t thread_attr = cali_create_attribute("thread_id", CALI_TYPE_INT, CALI_ATTR_ASVALUE | CALI_ATTR_SKIP_EVENTS);
-cali_set_int(thread_attr, omp_get_thread_num());
   int k,j;
   for (j=0; j<M; j++){
-  foo1(i,j);
-  for (k=0; k<P; k++){
-    C[i][j] += A[i][k] * B[k][j];
-  }
+      foo1(i,j);
+      for (k=0; k<P; k++){
+        C[i][j] += A[i][k] * B[k][j];
+      }
   }
 }
 
 // The actual mulitplication function, totally naive
 double matrix_multiply(void) {
-CALI_CXX_MARK_FUNCTION;
-cali_id_t thread_attr = cali_create_attribute("thread_id", CALI_TYPE_INT, CALI_ATTR_ASVALUE | CALI_ATTR_SKIP_EVENTS);
-cali_set_int(thread_attr, omp_get_thread_num());
         int i, j, k;
         double start, end;
         double B_T[M][P];
-        /*
+        
+
+        // timer for the start of the computation
+        // Reorganize the data but do not start multiplying elements before 
+        // the timer value is captured.
+        start = omp_get_wtime();
+
+
+        // TODO cali block
         for (i=0; i<P; i++){
                 for (j=0; j<M; j++){
                         B_T[j][i] = B[i][j];
                 }
         }
-        */
-        // timer for the start of the computation
-        // Reorganize the data but do not start multiplying elements before 
-        // the timer value is captured.
-        start = omp_get_wtime();
+
+
+        #pragma omp parallel for private(i,j,k)
+        for (i=0; i<N; i++)
+                for (j=0; j<M; j++)
+                        for (k=0; k<P; k++)
+                                D[i][j] += A[i][k] * B_T[j][k];
+                        
+        // TODO
+        // CALI Block end and restart
 
         #pragma omp parallel for private(i,j,k)
         for (i=0; i<N; i++){
@@ -116,6 +121,9 @@ cali_set_int(thread_attr, omp_get_thread_num());
                 //}
         }
 
+        // TODO
+        // CALI Block end
+
         // timer for the end of the computation
         end = omp_get_wtime();
         // return the amount of high resolution time spent
@@ -127,8 +135,6 @@ cali_set_int(thread_attr, omp_get_thread_num());
 // matrix being the same
 int check_result(void) {
 CALI_CXX_MARK_FUNCTION;
-cali_id_t thread_attr = cali_create_attribute("thread_id", CALI_TYPE_INT, CALI_ATTR_ASVALUE | CALI_ATTR_SKIP_EVENTS);
-cali_set_int(thread_attr, omp_get_thread_num());
         int i, j;
 
         double e  = 0.0;
@@ -151,9 +157,17 @@ cali_set_int(thread_attr, omp_get_thread_num());
 
 // main function
 int main(int argc, char **argv) {
+
+// example marking a funciton; inserts instrumentation at the start and end
 CALI_CXX_MARK_FUNCTION;
+
+// TODO
+// example getting thread ids; just in the main; see slides for discussion
 cali_id_t thread_attr = cali_create_attribute("thread_id", CALI_TYPE_INT, CALI_ATTR_ASVALUE | CALI_ATTR_SKIP_EVENTS);
+
+
 cali_set_int(thread_attr, omp_get_thread_num());
+
         int correct;
         int err = 0;
         double run_time;
@@ -171,9 +185,8 @@ cali_set_int(thread_attr, omp_get_thread_num());
 
         // Compute the number of mega flops
         mflops = (2.0 * N * P * M) / (1000000.0 * run_time);
-        printf("Order %d multiplication in %f seconds \n", ORDER, run_time);
-        printf("Order %d multiplication at %f mflops\n", ORDER, mflops);
-
+        printf("Order %d multiplication and some other computation in %f seconds \n", ORDER, run_time);
+        
         // Check results
         if (! correct) {
                 fprintf(stderr,"\n Errors in multiplication");
