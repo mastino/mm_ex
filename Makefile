@@ -11,7 +11,7 @@ mm: mm.c
 	${CC} -g -o mm ${INC} mm.c -DORDER=3000 -openmp ${LIB}
 
 mm_foo: mm_foo.c
-	${CC} -O0 -g -o mm ${INC} mm_foo.c -DORDER=3000 ${LIB} -fopenmp
+	${CC} -O0 -g -o mm_foo ${INC} mm_foo.c -DORDER=3000 ${LIB} -fopenmp
 
 clean:
 	rm -f mm mm_foo *.o *.cali *.json

@@ -63,13 +63,13 @@ CALI_CXX_MARK_FUNCTION;
 
 // not used in this example
 double foo1(int i, int j){
-CALI_CXX_MARK_FUNCTION;
+// CALI_CXX_MARK_FUNCTION;
   D[i][j] += A[i][j] * B[i][j];
 }
 
 
 double foo2(int i){
-CALI_CXX_MARK_FUNCTION;
+// CALI_CXX_MARK_FUNCTION;
   int k,j;
   for (j=0; j<M; j++){
       foo1(i,j);
@@ -81,6 +81,7 @@ CALI_CXX_MARK_FUNCTION;
 
 // The actual mulitplication function, totally naive
 double matrix_multiply(void) {
+CALI_CXX_MARK_FUNCTION;
         int i, j, k;
         double start, end;
         double B_T[M][P];
@@ -92,6 +93,7 @@ double matrix_multiply(void) {
         start = omp_get_wtime();
 
 
+    CALI_MARK_BEGIN("transpose");
         // TODO cali block
         for (i=0; i<P; i++){
                 for (j=0; j<M; j++){
@@ -99,30 +101,30 @@ double matrix_multiply(void) {
                 }
         }
 
-
         #pragma omp parallel for private(i,j,k)
         for (i=0; i<N; i++)
                 for (j=0; j<M; j++)
                         for (k=0; k<P; k++)
                                 D[i][j] += A[i][k] * B_T[j][k];
                         
-        // TODO
-        // CALI Block end and restart
+
+    CALI_MARK_END("transpose"); 
+
+    CALI_MARK_BEGIN("og_loop");
+
 
         #pragma omp parallel for private(i,j,k)
         for (i=0; i<N; i++){
-                //for (j=0; j<M; j++){
-                        //for (k=0; k<P; k++){
-                                // C[i][j] += A[i][k] * B_T[j][k];
-                                // C[i][j] += A[i][k] * B[k][j];
-                        //}
-                        //foo1(i,j);
-                        foo2(i);
-                //}
+                for (j=0; j<M; j++){
+                        for (k=0; k<P; k++){
+                                C[i][j] += A[i][k] * B[k][j];
+                        }
+                        // foo1(i,j);
+                        // foo2(i);
+                }
         }
-
-        // TODO
-        // CALI Block end
+ 
+    CALI_MARK_END("og_loop"); 
 
         // timer for the end of the computation
         end = omp_get_wtime();
@@ -164,10 +166,10 @@ CALI_CXX_MARK_FUNCTION;
 // TODO
 // example getting thread ids; just in the main; see slides for discussion
 cali_id_t thread_attr = cali_create_attribute("thread_id", CALI_TYPE_INT, CALI_ATTR_ASVALUE | CALI_ATTR_SKIP_EVENTS);
-
-
+#pragma omp parallel
+{
 cali_set_int(thread_attr, omp_get_thread_num());
-
+}
         int correct;
         int err = 0;
         double run_time;
