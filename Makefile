@@ -1,7 +1,7 @@
 # matrix multiplication with openmp intended as a Caliper test
 
 CC=icpc
-CC=g++
+# CC=g++
 INC=-I${CALIPER_DIR}/include
 LIB=-L${CALIPER_DIR}/lib64 -lcaliper
 
